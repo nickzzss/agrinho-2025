@@ -1,54 +1,46 @@
+// Variáveis do jogo
 let truck;
-let obstacles = [];
-let road;
+let fruits = [];
 let score = 0;
-let isGameOver = false;
+let gameOver = false;
 
 function setup() {
-  createCanvas(800, 600);
-  road = new Road();
-  truck = new Truck(width / 2, height - 100);
+  createCanvas(400, 600);
+  truck = new Truck();
+  frameRate(60);
 }
 
 function draw() {
-  background(135, 206, 235); // Céu azul
+  background(200);
 
-  if (isGameOver) {
-    fill(255, 0, 0);
-    textSize(48);
-    textAlign(CENTER, CENTER);
-    text("GAME OVER", width / 2, height / 2);
+  if (gameOver) {
     textSize(32);
-    text("Pontuação Final: " + score, width / 2, height / 2 + 60);
+    fill(0);
+    textAlign(CENTER, CENTER);
+    text('VOCÊ PERDEU', width / 2, height / 2);
     return;
   }
 
-  road.show();
   truck.update();
   truck.show();
 
   if (frameCount % 60 === 0) {
-    obstacles.push(new Obstacle());
+    fruits.push(new Fruit());
   }
 
-  for (let i = obstacles.length - 1; i >= 0; i--) {
-    obstacles[i].update();
-    obstacles[i].show();
+  for (let i = fruits.length - 1; i >= 0; i--) {
+    fruits[i].update();
+    fruits[i].show();
 
-    if (obstacles[i].hits(truck)) {
-      isGameOver = true;
-    }
-
-    if (obstacles[i].offscreen()) {
-      obstacles.splice(i, 1);
-      score += 10; // Incrementa pontos ao desviar com sucesso
+    if (fruits[i].offScreen()) {
+      fruits.splice(i, 1);
+    } else if (fruits[i].hits(truck)) {
+      score++;
+      fruits.splice(i, 1);
     }
   }
 
-  // Exibe a pontuação
-  fill(0);
-  textSize(24);
-  text("Pontuação: " + score, width - 200, 30);
+  displayScore();
 }
 
 function keyPressed() {
@@ -65,36 +57,44 @@ function keyReleased() {
   }
 }
 
-class Truck {
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-    this.width = 50;
-    this.height = 30;
-    this.xSpeed = 0;
-  }
+function displayScore() {
+  textSize(24);
+  fill(0);
+  textAlign(LEFT, TOP);
+  text('Pontuação: ' + score, 10, 10);
+}
 
-  setDir(dir) {
-    this.xSpeed = dir * 5;
+// Classe do caminhão
+class Truck {
+  constructor() {
+    this.x = width / 2;
+    this.y = height - 60;
+    this.w = 50;
+    this.h = 30;
+    this.xdir = 0;
   }
 
   update() {
-    this.x += this.xSpeed;
-    this.x = constrain(this.x, 0, width - this.width);
+    this.x += this.xdir * 5;
+    this.x = constrain(this.x, 0, width - this.w);
+  }
+
+  setDir(dir) {
+    this.xdir = dir;
   }
 
   show() {
     fill(255, 0, 0);
-    rect(this.x, this.y, this.width, this.height);
+    rect(this.x, this.y, this.w, this.h);
   }
 }
 
-class Obstacle {
+// Classe da fruta
+class Fruit {
   constructor() {
     this.x = random(width);
     this.y = 0;
-    this.width = random(40, 80);
-    this.height = random(30, 60);
+    this.size = 20;
     this.speed = random(2, 5);
   }
 
@@ -102,36 +102,17 @@ class Obstacle {
     this.y += this.speed;
   }
 
-  show() {
-    fill(0);
-    rect(this.x, this.y, this.width, this.height);
-  }
-
-  offscreen() {
+  offScreen() {
     return this.y > height;
   }
 
   hits(truck) {
-    return (
-      this.x < truck.x + truck.width &&
-      this.x + this.width > truck.x &&
-      this.y < truck.y + truck.height &&
-      this.y + this.height > truck.y
-    );
-  }
-}
-
-class Road {
-  constructor() {
-    this.width = width;
-    this.height = height;
+    let d = dist(this.x, this.y, truck.x + truck.w / 2, truck.y + truck.h / 2);
+    return d < this.size / 2 + truck.w / 2;
   }
 
   show() {
-    fill(50, 50, 50);
-    rect(0, 0, this.width, this.height);
-    stroke(255);
-    strokeWeight(4);
-    line(this.width / 2, 0, this.width / 2, this.height);
+    fill(0, 255, 0);
+    ellipse(this.x, this.y, this.size);
   }
 }
